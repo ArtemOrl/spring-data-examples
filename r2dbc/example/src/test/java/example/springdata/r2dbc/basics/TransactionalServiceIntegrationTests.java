@@ -1,11 +1,11 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package example.springdata.r2dbc.basics;
 import reactor.core.publisher.Hooks;
 import reactor.test.StepVerifier;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,13 +30,14 @@ import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.test.context.junit4.SpringRunner;
 
 /**
- * @author Oliver Gierke
+ * @author Oliver Drotbohm
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = InfrastructureConfiguration.class)
-public class CustomerRepositoryIntegrationTests {
+public class TransactionalServiceIntegrationTests {
 
-	@Autowired CustomerRepository customers;
+	@Autowired TransactionalService service;
+	@Autowired CustomerRepository repository;
 	@Autowired DatabaseClient database;
 
 	@Before
@@ -59,39 +59,31 @@ public class CustomerRepositoryIntegrationTests {
 	}
 
 	@Test
-	public void executesFindAll() throws IOException {
+	public void exceptionTriggersRollback() {
 
-		Customer dave = new Customer(null, "Dave", "Matthews");
-		Customer carter = new Customer(null, "Carter", "Beauford");
-
-		insertCustomers(dave, carter);
-
-		customers.findAll() //
+		service.save(new Customer(null, "Dave", "Matthews")) //
 				.as(StepVerifier::create) //
-				.assertNext(dave::equals) //
-				.assertNext(carter::equals) //
+				.expectError() // Error because of the exception triggered within the service
+				.verify();
+
+		// No data inserted due to rollback
+		repository.findByLastname("Matthews") //
+				.as(StepVerifier::create) //
 				.verifyComplete();
 	}
 
 	@Test
-	public void executesAnnotatedQuery() throws IOException {
+	public void insertsDataTransactionally() {
 
-		Customer dave = new Customer(null, "Dave", "Matthews");
-		Customer carter = new Customer(null, "Carter", "Beauford");
-
-		insertCustomers(dave, carter);
-
-		customers.findByLastname("Matthews") //
+		service.save(new Customer(null, "Carter", "Beauford")) //
 				.as(StepVerifier::create) //
-				.assertNext(dave::equals) //
+				.expectNextMatches(Customer::hasId) //
 				.verifyComplete();
-	}
 
-	private void insertCustomers(Customer... customers) {
-
-		this.customers.saveAll(Arrays.asList(customers))//
+		// Data inserted due to commit
+		repository.findByLastname("Beauford") //
 				.as(StepVerifier::create) //
-				.expectNextCount(2) //
+				.expectNextMatches(Customer::hasId) //
 				.verifyComplete();
 	}
 }

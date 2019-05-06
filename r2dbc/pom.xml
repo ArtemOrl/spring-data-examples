@@ -22,6 +22,7 @@
 
 	<properties>
 		<h2.version>1.4.197</h2.version>
+		<spring.version>5.2.0.BUILD-SNAPSHOT</spring.version>
 	</properties>
 
 	<dependencyManagement>
@@ -41,7 +42,7 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-r2dbc</artifactId>
-			<version>1.0.0.BUILD-SNAPSHOT</version>
+			<version>1.0.0.gh-107-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
@@ -85,8 +86,7 @@
 		<profile>
 			<id>spring-data-next</id>
 			<properties>
-				<spring-data-releasetrain.version>Moore-BUILD-SNAPSHOT
-				</spring-data-releasetrain.version>
+				<spring-data-releasetrain.version>Moore-BUILD-SNAPSHOT</spring-data-releasetrain.version>
 			</properties>
 		</profile>
 
