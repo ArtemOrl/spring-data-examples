@@ -18,7 +18,6 @@ package example.springdata.jpa.simple;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
-import static org.springframework.data.domain.Sort.Direction.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +32,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.TypedSort;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -171,12 +171,13 @@ public class SimpleUserRepositoryTests {
 		// we deliberately save the items in reverse
 		repository.saveAll(Arrays.asList(user2, user1, user0));
 
-		List<User> resultAsc = repository.findTop2By(new Sort(ASC, "lastname"));
+		TypedSort<User> sort = Sort.sort(User.class);
+		List<User> resultAsc = repository.findTop2By(sort.by(User::getLastname).ascending());
 
 		assertThat(resultAsc.size(), is(2));
 		assertThat(resultAsc, hasItems(user0, user1));
 
-		List<User> resultDesc = repository.findTop2By(new Sort(DESC, "lastname"));
+		List<User> resultDesc = repository.findTop2By(sort.by(User::getLastname).descending());
 
 		assertThat(resultDesc.size(), is(2));
 		assertThat(resultDesc, hasItems(user1, user2));
